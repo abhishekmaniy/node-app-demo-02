@@ -1,15 +1,19 @@
 FROM node:18
 
-WORKDIR /
+WORKDIR /app
 
-# Copy only package.json to install deps first (to cache this layer)
+# Copy and install dependencies
 COPY package*.json ./
-
 RUN npm install
 
-# Copy app code (excluding node_modules because of .dockerignore)
+# Copy the source code
 COPY . .
 
+# Build TypeScript
+RUN npm run build
+
+# Expose the app port
 EXPOSE 3000
 
-CMD ["node", "index.js"]
+# Start the app
+CMD ["npm", "start"]
