@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = 'abhishekmaniyar3811/your-repo-name'
+        DOCKER_IMAGE = 'abhishekmaniyar3811/node-app-demo-2'
         DOCKER_CREDENTIALS_ID = 'docker-hub-creds'
     }
 
