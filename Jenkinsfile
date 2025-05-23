@@ -1,34 +1,34 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'node:18'   // or 'node:20' or whatever version you need
+        }
+    }
 
     environment {
         DOCKER_IMAGE = 'abhishekmaniyar3811/node-app-demo-2'
         DOCKER_CREDENTIALS_ID = 'docker-hub-creds'
     }
 
-    triggers {
-        githubPush()
-    }
-
     stages {
         stage('Clone Repo') {
             steps {
-                git url: 'https://github.com/abhishekmaniy/node-app-demo-02.git', branch: 'main'
+                git url: 'https://github.com/abhishekmaniy/node-app-demo-02.git', branch: 'main', credentialsId: 'githubtokennode2'
             }
         }
 
         stage('Install & Build') {
             steps {
                 sh 'npm install'
-                sh 'node index.js & sleep 5 && kill $!' // Runs app briefly to check if it starts
+                sh 'node index.js'
             }
         }
 
         stage('Docker Build') {
             steps {
                 script {
-                    env.COMMIT_HASH = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
-                    env.IMAGE_TAG = "${DOCKER_IMAGE}:${COMMIT_HASH}"
+                    COMMIT_HASH = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+                    IMAGE_TAG = "${DOCKER_IMAGE}:${COMMIT_HASH}"
                 }
                 sh 'docker build -t $IMAGE_TAG .'
             }
@@ -36,7 +36,7 @@ pipeline {
 
         stage('Push to Docker Hub') {
             steps {
-                withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh '''
                         echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
                         docker push $IMAGE_TAG
@@ -49,7 +49,7 @@ pipeline {
 
     post {
         success {
-            echo "✅ Docker image built and pushed: ${IMAGE_TAG}"
+            echo "✅ Docker image built and pushed successfully: $IMAGE_TAG"
         }
         failure {
             echo "❌ Build failed!"
